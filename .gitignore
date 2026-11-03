@@ -3,6 +3,5 @@ informe.pdf
 informe.typ
 informe.knit.md
 informe_files/
-datos/*.csv
-datos/*.xlsx
 .Rhistory
+.Rproj.user/
