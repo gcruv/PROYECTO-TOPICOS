@@ -1,0 +1,94 @@
+# EYP3407 · Trabajo final · Caso 06: gravedad de colisiones viales registradas (STATS19)
+
+**Integrantes:** [COMPLETAR: cuatro nombres]
+**Curso:** Tópicos Aplicados en Estadística (EYP3407), PUC Chile, segundo semestre 2026
+**Pregunta:** ¿qué características distinguen colisiones graves o fatales dentro de las colisiones registradas? (clasificación retrospectiva; Gran Bretaña, 2021–2023, fuerzas policiales 1, 6 y 13).
+
+## Contenido
+
+```
+README.md          # este archivo
+analisis.R         # punto de entrada: ejecuta todo (preparación, ajuste, evaluación e informe)
+preparacion.R      # auditoría de integridad y construcción de la base analítica (la llama analisis.R)
+informe.qmd        # fuente del informe (Quarto -> PDF), lee las tablas de salidas/
+datos/             # archivos de entrada del caso (ver abajo; no se versionan)
+salidas/           # se genera al ejecutar (tablas .csv, figuras .png, predicciones, registro)
+informe.pdf        # se genera al ejecutar
+presentacion.pdf   # diapositivas del equipo
+```
+
+## Datos
+
+- **Paquete usado:** `caso06_stats19.zip` (copia preparada por el curso el 12 de octubre de 2026), que contiene `colisiones.csv`, `vehiculos.csv`, `victimas.csv`, `stats19_diccionario.xlsx` y `LEEME.txt`.
+- **Fuente original:** Department for Transport (Reino Unido), *Road safety open data* (STATS19), archivos anuales 2021–2023 y guía de datos 2025. Las URL exactas están en `LEEME.txt`.
+- **Cómo obtenerlos:** [COMPLETAR: enlace de descarga accesible del .zip del curso o de su copia]. Descomprimir **todos** los archivos dentro de `datos/`, de modo que existan `datos/colisiones.csv`, `datos/vehiculos.csv`, `datos/victimas.csv` y `datos/stats19_diccionario.xlsx`. No se vuelve a descargar nada desde el portal de origen.
+- **Condiciones de reutilización:** verificar en el sitio del productor antes de publicar los datos [COMPLETAR].
+
+## Entorno
+
+Probado con:
+
+| Componente | Versión |
+|---|---|
+| R | 4.3.3 |
+| data.table | 1.14.10 |
+| readxl | 1.4.3 |
+| glmnet | 4.1.8 |
+| Matrix | 1.6.5 |
+| rpart | 4.1.23 |
+| ranger | 0.16.0 |
+| ggplot2 | 3.4.4 |
+| knitr / rmarkdown | 1.45 / (instalado con R) |
+| Quarto | 1.11.9 (incluye Typst para generar el PDF; no requiere LaTeX) |
+
+Instalación de paquetes de R:
+
+```r
+install.packages(c("data.table", "readxl", "glmnet", "Matrix", "rpart", "ranger",
+                   "ggplot2", "knitr", "rmarkdown"))
+```
+
+Quarto se instala desde <https://quarto.org>. Si Quarto no está instalado, `analisis.R` ejecuta todo el análisis y deja las tablas y figuras en `salidas/`, pero no genera el informe (aparece un aviso).
+
+## Ejecución
+
+Desde la raíz del repositorio, con los datos en `datos/`:
+
+```bash
+Rscript --vanilla analisis.R
+```
+
+Un único comando ejecuta: auditoría y base analítica → validación temporal en desarrollo (2021–2022) → selección → reajuste → evaluación única en prueba (2023) → incertidumbre, diagnóstico y sensibilidades → figuras y tablas → `informe.pdf`.
+
+Variables de entorno opcionales: `STATS19_DIR` (carpeta de entradas, por defecto `datos`), `STATS19_OUT` (carpeta de salidas, por defecto `salidas`) y `STATS19_THREADS` (hilos de `ranger`, por defecto 1).
+
+**Control de ejecución.** Las semillas están fijadas (2026). Los hilos de `ranger` se fijan en 1 por defecto para que los resultados sean idénticos en cualquier computador; subir `STATS19_THREADS` acelera el ajuste pero puede cambiar los resultados en decimales finales. Las reglas de partición están en `analisis.R` (sección 4) y las predicciones de prueba se guardan en `salidas/predicciones_prueba.csv.gz`, desde las cuales se calculan las métricas. Tiempo aproximado: ver registro más abajo (≈ 9 minutos con un núcleo y 4 GB de memoria).
+
+## Registro de reproducción desde copia limpia
+
+- **Fecha:** 2 de noviembre de 2026 (20:47 a 20:57 UTC).
+- **Entorno:** Linux (Ubuntu 24), 1 núcleo, 4 GB de memoria, R 4.3.3, Quarto 1.11.9.
+- **Comando:** `Rscript --vanilla analisis.R`, desde una copia limpia del repositorio con los cinco archivos del paquete en `datos/` y sin objetos de sesiones previas.
+- **Resultado:** ejecución completa sin errores en 8,3 minutos; generó 26 archivos en `salidas/` y `informe.pdf` (14 páginas: cuerpo y anexo). Una ejecución anterior independiente, también desde copia limpia, produjo tablas de selección y de prueba idénticas byte a byte.
+- **Realizada por:** Claude en un entorno de pruebas, no por el equipo.
+
+**Pendiente para el equipo:** repetir esta prueba en un entorno nuevo o en el computador de otro integrante y anotar aquí fecha, comando y resultado, como exige la pauta.
+
+## Decisiones y trazabilidad
+
+- Las tres tablas se leen como texto (`collision_index` mezcla letras y dígitos); los vehículos se agregan a nivel de colisión **antes** de unir, y la tabla de víctimas se usa solo para auditoría.
+- Se usan las variables `*_historic` (formato 2011), completas en 2021–2023.
+- La reserva de prueba (2023) se evaluó una primera vez durante el desarrollo del código, con una búsqueda de hiperparámetros más reducida. Después, con resultados **de desarrollo**, se amplió la grilla (la mejor configuración estaba en el borde) y se añadió la referencia por fuerza. Los resultados de regresión logística y bosque no cambiaron; los del árbol cambiaron levemente. Está explicado en la sección 5.6 del informe.
+
+## Aportes del equipo
+
+[COMPLETAR: aportes de cada integrante]
+
+## Declaración de uso de IA
+
+- **Herramienta:** Claude (Anthropic).
+- **Fechas:** [COMPLETAR: fechas exactas; fines de octubre y comienzos de noviembre de 2026].
+- **Propósito:** programación y depuración de `preparacion.R` y `analisis.R`, redacción de `informe.qmd` y revisión de la estructura frente a la pauta.
+- **Partes afectadas:** todo el código y el texto del informe, con las cifras generadas por el código a partir de los datos entregados.
+- **Comprobaciones realizadas:** ejecución completa del código sobre los datos entregados, incluida una ejecución desde copia limpia con el comando anterior; verificación de integridad de claves y conteos; las cifras del informe se leen de las tablas generadas.
+- **Responsabilidad:** el equipo debe revisar el código, los resultados, las afirmaciones y las referencias, y poder explicarlos en la defensa [COMPLETAR: confirmación del equipo].

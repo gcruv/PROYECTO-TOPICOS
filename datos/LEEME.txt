@@ -1,0 +1,61 @@
+EYP3407 - Caso 06: STATS19
+Copia de datos preparada el 12 de octubre de 2026.
+
+SUBCONJUNTO ENTREGADO
+Años 2021–2023; fuerzas policiales con códigos 1, 6 y 13. Todas sus colisiones y todos los vehículos y víctimas vinculados. Las tres tablas se entregan sin unir.
+
+ARCHIVOS Y VARIABLES
+colisiones.csv: una fila por collision_index.
+vehiculos.csv: vehículos enlazados por collision_index; vehicle_reference
+distingue vehículos dentro de una colisión.
+victimas.csv: personas lesionadas enlazadas por collision_index;
+casualty_reference distingue personas dentro de una colisión.
+stats19_diccionario.xlsx: códigos y definiciones oficiales; consultar la
+vigencia temporal de las categorías para registros de 2021–2023.
+Una unión directa de vehículos y víctimas puede multiplicar las filas.
+Las tablas se entregan sin agregar y sin construir la respuesta binaria.
+
+LECTURA Y USO
+Los CSV utilizan UTF-8, coma separadora y punto decimal. Los nombres y códigos
+originales se conservan. Un valor ausente no equivale a cero.
+Descomprima este paquete en datos/ de su repositorio. Trabaje exclusivamente
+con estos archivos y con la población y respuesta de la ficha del ANEXO.
+Las transformaciones y el análisis deben programarse en el repositorio del equipo.
+No es necesario descargar de nuevo las fuentes ni ejecutar código de extracción.
+
+PROCEDENCIA
+La copia entregada es el punto de partida de la reproducción. Los portales
+pueden revisar sus datos después de la descarga. Cite al productor original,
+la edición o fecha de descarga y las referencias del ANEXO. Consulte las
+condiciones de reutilización de la fuente al publicar los datos.
+
+Fuentes utilizadas en la preparación:
+dft-road-casualty-statistics-collision-2021.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-collision-2021.csv
+
+dft-road-casualty-statistics-vehicle-2021.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-vehicle-2021.csv
+
+dft-road-casualty-statistics-casualty-2021.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-casualty-2021.csv
+
+dft-road-casualty-statistics-collision-2022.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-collision-2022.csv
+
+dft-road-casualty-statistics-vehicle-2022.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-vehicle-2022.csv
+
+dft-road-casualty-statistics-casualty-2022.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-casualty-2022.csv
+
+dft-road-casualty-statistics-collision-2023.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-collision-2023.csv
+
+dft-road-casualty-statistics-vehicle-2023.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-vehicle-2023.csv
+
+dft-road-casualty-statistics-casualty-2023.csv
+https://data.dft.gov.uk/road-accidents-safety-data/dft-road-casualty-statistics-casualty-2023.csv
+
+stats19_diccionario.xlsx
+https://assets.publishing.service.gov.uk/media/6ab2a71d997a4b2950cced58/dft-road-casualty-statistics-road-safety-open-dataset-data-guide-2025.xlsx
