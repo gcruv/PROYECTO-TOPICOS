@@ -3,5 +3,6 @@ informe.pdf
 informe.typ
 informe.knit.md
 informe_files/
+.quarto/
 .Rhistory
 .Rproj.user/

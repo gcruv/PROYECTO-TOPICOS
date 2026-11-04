@@ -1,6 +1,6 @@
 # EYP3407 · Trabajo final · Caso 06: gravedad de colisiones viales registradas (STATS19)
 
-**Integrantes:** [COMPLETAR: cuatro nombres]
+**Integrantes:** Guillermo Cruz, Lucas Pastrián, Sebastián Pavés, Constanza Sepúlveda
 **Curso:** Tópicos Aplicados en Estadística (EYP3407), PUC Chile, segundo semestre 2026
 **Pregunta:** ¿qué características distinguen colisiones graves o fatales dentro de las colisiones registradas? (clasificación retrospectiva; Gran Bretaña, 2021–2023, fuerzas policiales 1, 6 y 13).
 
@@ -11,7 +11,9 @@ README.md          # este archivo
 analisis.R         # punto de entrada: ejecuta todo (preparación, ajuste, evaluación e informe)
 preparacion.R      # auditoría de integridad y construcción de la base analítica (la llama analisis.R)
 informe.qmd        # fuente del informe (Quarto -> PDF), lee las tablas de salidas/
-datos/             # archivos de entrada del caso (ver abajo; no se versionan)
+estilo.typ         # estilo del informe (formato tipográfico); lo usa informe.qmd
+logo_puc.png       # logo de la portada del informe
+datos/             # copia del paquete del curso, sin modificar
 salidas/           # se genera al ejecutar (tablas .csv, figuras .png, predicciones, registro)
 informe.pdf        # se genera al ejecutar
 presentacion.pdf   # diapositivas del equipo
@@ -19,10 +21,10 @@ presentacion.pdf   # diapositivas del equipo
 
 ## Datos
 
-- **Paquete usado:** `caso06_stats19.zip` (copia preparada por el curso el 12 de octubre de 2026), que contiene `colisiones.csv`, `vehiculos.csv`, `victimas.csv`, `stats19_diccionario.xlsx` y `LEEME.txt`.
-- **Fuente original:** Department for Transport (Reino Unido), *Road safety open data* (STATS19), archivos anuales 2021–2023 y guía de datos 2025. Las URL exactas están en `LEEME.txt`.
-- **Cómo obtenerlos:** [COMPLETAR: enlace de descarga accesible del .zip del curso o de su copia]. Descomprimir **todos** los archivos dentro de `datos/`, de modo que existan `datos/colisiones.csv`, `datos/vehiculos.csv`, `datos/victimas.csv` y `datos/stats19_diccionario.xlsx`. No se vuelve a descargar nada desde el portal de origen.
-- **Condiciones de reutilización:** verificar en el sitio del productor antes de publicar los datos [COMPLETAR].
+- **Paquete usado:** `caso06_stats19.zip`, entregado por el curso EYP3407 en Canvas (copia de datos preparada el 12 de octubre de 2026). Contiene `colisiones.csv`, `vehiculos.csv`, `victimas.csv`, `stats19_diccionario.xlsx` y `LEEME.txt`. Subconjunto: años 2021–2023 y fuerzas policiales con códigos 1, 6 y 13.
+- **Fuente original y versión:** Department for Transport (Reino Unido), Road Safety Open Data (STATS19): archivos anuales 2021–2023 de colisiones, vehículos y víctimas, y guía de datos 2025 (diccionario). Las URL exactas están en `datos/LEEME.txt`.
+- **Cómo obtenerlos:** los cinco archivos del paquete están incluidos, sin modificar, en la carpeta `datos/` de este repositorio. Si se parte del `.zip` original, basta descomprimirlo dentro de `datos/`. No es necesario descargar de nuevo desde el portal de origen; los portales pueden revisar sus datos después de la fecha de la copia.
+- **Condiciones de reutilización:** datos del DfT bajo Open Government Licence v3.0. *Contains public sector information licensed under the Open Government Licence v3.0.* https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/ (verificar la licencia vigente en el sitio del productor antes de publicar). El paquete fue armado por el curso; [COMPLETAR: confirmar con el profesor o el ayudante que puede publicarse].
 
 ## Entorno
 
@@ -66,10 +68,10 @@ Variables de entorno opcionales: `STATS19_DIR` (carpeta de entradas, por defecto
 
 ## Registro de reproducción desde copia limpia
 
-- **Fecha:** 2 de noviembre de 2026 (20:47 a 20:57 UTC).
+- **Fecha:** 4 de noviembre de 2026 (02:31 a 02:39 UTC).
 - **Entorno:** Linux (Ubuntu 24), 1 núcleo, 4 GB de memoria, R 4.3.3, Quarto 1.11.9.
-- **Comando:** `Rscript --vanilla analisis.R`, desde una copia limpia del repositorio con los cinco archivos del paquete en `datos/` y sin objetos de sesiones previas.
-- **Resultado:** ejecución completa sin errores en 8,3 minutos; generó 26 archivos en `salidas/` y `informe.pdf` (14 páginas: cuerpo y anexo). Una ejecución anterior independiente, también desde copia limpia, produjo tablas de selección y de prueba idénticas byte a byte.
+- **Comando:** `Rscript --vanilla analisis.R`, desde una copia limpia armada con el contenido de `repositorio_caso06.zip` y los cinco archivos del paquete en `datos/`, sin objetos de sesiones previas.
+- **Resultado:** ejecución completa sin errores en 6,7 minutos; generó 26 archivos en `salidas/` y `informe.pdf` (14 páginas, con anexo). Las tablas de selección, de prueba, de incertidumbre y de confusión resultaron idénticas, byte a byte, a las de una ejecución anterior independiente (8,3 minutos).
 - **Realizada por:** Claude en un entorno de pruebas, no por el equipo.
 
 **Pendiente para el equipo:** repetir esta prueba en un entorno nuevo o en el computador de otro integrante y anotar aquí fecha, comando y resultado, como exige la pauta.

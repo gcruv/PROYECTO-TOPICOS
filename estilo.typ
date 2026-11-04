@@ -1,0 +1,12 @@
+#set text(lang: "es", region: "CL")
+#set par(justify: true, leading: 0.62em, spacing: 0.95em)
+#show heading.where(level: 1): set text(size: 15pt, weight: "bold")
+#show heading.where(level: 1): set block(above: 1.7em, below: 0.9em)
+#show heading.where(level: 2): set text(size: 12.5pt, weight: "bold")
+#show heading.where(level: 2): set block(above: 1.4em, below: 0.75em)
+#set figure.caption(separator: ": ")
+#show figure.caption: set text(size: 10pt)
+#set table(stroke: none, inset: (x: 5pt, y: 3.2pt))
+#show table: set text(size: 9pt, hyphenate: false)
+#show table: it => block(breakable: true)[#it #v(-0.5em) #line(length: 100%, stroke: 0.8pt)]
+#show figure: set block(breakable: true)

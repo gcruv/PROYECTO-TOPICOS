@@ -336,7 +336,7 @@ no_usadas_veh <- sin_clasif[tabla == "vehiculos"]
 if (nrow(no_usadas_veh)) {
   aud <- rbind(aud, data.table(tabla = "vehiculos", nombre = no_usadas_veh$nombre,
     interp = "otras variables de vehiculo/conductor", tipo = "varias", disp = "registro",
-    decision = "No usada en el modelo principal (se puede agregar si el equipo lo justifica)"))
+    decision = "No usada en el modelo principal"))
 }
 stopifnot(!nrow(sin_clasif[tabla == "colisiones"]))
 setnames(aud, c("tabla", "variable", "interpretacion", "tipo", "disponibilidad", "decision"))

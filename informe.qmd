@@ -1,17 +1,20 @@
 ---
-title: "Gravedad de colisiones viales registradas (STATS19, 2021–2023): comparación de procedimientos de clasificación"
-subtitle: "EYP3407 Tópicos Aplicados en Estadística · Trabajo final · Caso 06"
-author: "[COMPLETAR: nombres de los cuatro integrantes]"
-date: "2026-11-10"
-date-format: "D [de] MMMM [de] YYYY"
 lang: es
+language:
+  crossref-fig-title: "Figura"
+  crossref-tbl-title: "Cuadro"
+  crossref-fig-prefix: "Figura"
+  crossref-tbl-prefix: "Cuadro"
 format:
   typst:
     papersize: a4
-    margin: { x: 2.2cm, y: 2.2cm }
-    fontsize: 10pt
+    margin: { x: 2.5cm, y: 2.5cm }
+    fontsize: 11pt
+    mainfont: "Liberation Serif"
     number-sections: true
+    section-numbering: "1.1."
     fig-format: png
+    include-in-header: estilo.typ
 execute:
   echo: false
   warning: false
@@ -49,9 +52,46 @@ nTot <- constr[1, filas]; nDev <- constr[grepl("desarrollo", paso), filas]; nTes
 dur <- sub("Duracion \\(min\\): ", "", reg[grep("^Duracion", reg)])
 ```
 
-# Resumen ejecutivo
+```{r portada}
+#| output: asis
+res <- paste0(
+  "*Problema.* Entre ", mi(nTot), " colisiones con lesionados registradas por tres fuerzas policiales británicas (códigos 1, 6 y 13) en 2021–2023, se busca distinguir las graves o fatales (", n1(constr[1, prevalencia]), " %) de las leves, con información del registro de la colisión y de los vehículos involucrados. ",
+  "*Resultado principal.* Con validación temporal en 2021–2022 y una reserva de prueba en 2023, el bosque aleatorio fue el procedimiento elegido: redujo la pérdida logarítmica de ", n3(g(tst,"REF","logloss")), " (prevalencia) a ", n3(g(tst,"M3","logloss")), " y alcanzó un AUC ROC de ", n3(g(tst,"M3","auc_roc")), ". Frente a una referencia más exigente (prevalencia por fuerza), la reducción es ", n3(-g(tst,"M3","dif_logloss_vs_ref_f")), " nats por colisión (IC 95 % por autoridad vial: ", n3(bl[referencia %like% "REF_F" & unidad=="cluster_geo", ic_inf]), " a ", n3(bl[referencia %like% "REF_F" & unidad=="cluster_geo", ic_sup]), ", condicional a los ajustes). ",
+  "*Recomendación.* Usarlo como herramienta de caracterización y priorización de registros ya existentes, no como pronóstico de accidentes ni como evidencia causal. ",
+  "*Principal limitación.* La discriminación es moderada (VPP ", n3(g(conf,"M3","VPP"),2), " con prevalencia ", n1(g(tst,"M3","prevalencia")), " %), baja dentro de las fuerzas 6 y 13, y la definición de gravedad cambia entre fuerzas y periodos.")
+cat('```{=typst}\n',
+'#align(center)[\n',
+'  #set par(justify: false)\n',
+'  #image("logo_puc.png", width: 3.0cm)\n',
+'  #v(0.9em)\n',
+'  #text(size: 19pt, weight: "bold", hyphenate: false)[Gravedad de colisiones viales registradas (STATS19, 2021–2023): comparación de procedimientos de clasificación]\n',
+'  #v(1.1em)\n',
+'  #text(size: 13pt, weight: "bold")[Tópicos Aplicados en Estadística - EYP3407]\n',
+'  #v(0.5em)\n',
+'  #text(size: 12pt)[Guillermo Cruz, Lucas Pastrián, Sebastián Pavés, Constanza Sepúlveda]\n',
+'  #v(0.5em)\n',
+'  #text(size: 12pt)[10 de noviembre de 2026]\n',
+']\n',
+'#v(1.4em)\n',
+'#block(width: 100%, inset: (x: 1.2cm))[\n',
+'  #align(center)[#text(size: 10pt, weight: "bold")[Resumen]]\n',
+'  #v(0.2em)\n',
+'  #set text(size: 10pt)\n',
+'  #set par(justify: true)\n',
+'  ', res, '\n',
+']\n',
+'#v(0.6em)\n',
+'*Palabras clave*: Clasificación, Gravedad de colisiones, STATS19, Validación temporal, Bosque aleatorio, Pérdida logarítmica\n',
+'```\n', sep = "")
+```
 
-**Problema.** Entre `r mi(nTot)` colisiones con lesionados registradas por tres fuerzas policiales británicas (códigos 1, 6 y 13) en 2021–2023, se busca distinguir las graves o fatales (`r n1(constr[1, prevalencia])` %) de las leves, con información del registro de la colisión y de los vehículos involucrados. **Resultado principal.** Con validación temporal en 2021–2022 y una reserva de prueba en 2023, el bosque aleatorio fue el procedimiento elegido: redujo la pérdida logarítmica de `r n3(g(tst,"REF","logloss"))` (prevalencia) a `r n3(g(tst,"M3","logloss"))` y alcanzó un AUC ROC de `r n3(g(tst,"M3","auc_roc"))`. Frente a una referencia más exigente (prevalencia por fuerza), la reducción es `r n3(-g(tst,"M3","dif_logloss_vs_ref_f"))` nats por colisión (IC 95 % por autoridad vial: `r n3(bl[referencia %like% "REF_F" & unidad=="cluster_geo", ic_inf])` a `r n3(bl[referencia %like% "REF_F" & unidad=="cluster_geo", ic_sup])`, condicional a los ajustes). **Recomendación.** Usarlo como herramienta de caracterización y priorización de registros ya existentes, no como pronóstico de accidentes ni como evidencia causal. **Principal limitación.** La discriminación es moderada (VPP `r n3(g(conf,"M3","VPP"),2)` con prevalencia `r n1(g(tst,"M3","prevalencia"))` %), baja dentro de las fuerzas 6 y 13, y la definición de gravedad cambia entre fuerzas y periodos.
+# Introducción
+
+STATS19 es el registro oficial de colisiones viales con lesionados que la policía notifica en Gran Bretaña; cada colisión se registra junto con los vehículos y las personas lesionadas, y su gravedad queda clasificada como fatal, grave o leve [1]. Distinguir qué características de la vía, las condiciones y los vehículos acompañan a las colisiones más graves es una pregunta natural para quienes priorizan la revisión de registros o describen patrones de siniestralidad, pero tiene una dificultad estadística específica: la gravedad registrada no se mide igual en todas las fuerzas ni en todos los periodos. En nuestro recorte la prevalencia de colisiones graves o fatales va de `r n1(min(prev$prevalencia))` % a `r n1(max(prev$prevalencia))` % según fuerza y año, y parte de esa diferencia puede deberse al sistema de reporte y no a la gravedad real.
+
+En este trabajo abordamos la pregunta con un diseño pensado para no engañarnos. Comparamos una referencia simple con tres procedimientos de aprendizaje (regresión logística regularizada, árbol podado y bosque aleatorio) sobre las mismas colisiones y con la misma información admisible. Preparamos los datos para evitar duplicaciones y fugas de información, validamos con particiones temporales, reservamos 2023 para una única evaluación final, cuantificamos la incertidumbre respetando la dependencia geográfica y temporal, y estudiamos dos sensibilidades relevantes. Todo el análisis se reproduce desde los archivos entregados con un solo comando.
+
+El informe sigue esta organización: la sección 2 define el problema, los datos y la construcción de la base; la sección 3 describe el diseño de evaluación; la sección 4, los métodos; la sección 5 presenta los resultados, la incertidumbre, el diagnóstico y las sensibilidades; la sección 6 discute la respuesta a la pregunta y sus límites; y la sección 7 documenta la reproducibilidad, los aportes del equipo y el uso de IA.
 
 # Problema y datos
 
@@ -63,7 +103,7 @@ El análisis es **retrospectivo**: caracteriza colisiones ya ocurridas y registr
 
 ## Procedencia y condiciones de uso
 
-Los datos provienen del Department for Transport (Reino Unido), *Road safety open data*, archivos anuales de colisiones, vehículos y víctimas 2021, 2022 y 2023, y el diccionario oficial (guía de datos 2025). El equipo trabajó con la copia preparada por el curso el 12 de octubre de 2026 (`datos/`), sin descargar de nuevo las fuentes; los portales pueden revisar sus datos después de esa fecha. Los archivos originales no se editan; todas las transformaciones están programadas en `preparacion.R`. Las condiciones de reutilización deben verificarse en el sitio del productor antes de publicar los datos [COMPLETAR: licencia vigente]. Se distinguen tres fechas: la del fenómeno (`date` de la colisión), la del registro (año de la colección) y la de la copia usada (12-10-2026).
+Los datos provienen del Department for Transport (Reino Unido), *Road safety open data* (STATS19): archivos anuales de colisiones, vehículos y víctimas de 2021, 2022 y 2023 [1], y la guía de datos 2025 como diccionario oficial [2]. El equipo trabajó con el paquete `caso06_stats19.zip`, entregado por el curso en Canvas (copia preparada el 12 de octubre de 2026) [3], sin descargar de nuevo las fuentes; los portales pueden revisar sus datos después de esa fecha. Los archivos originales no se editan; todas las transformaciones están programadas en `preparacion.R`. Los datos del DfT se publican bajo la Open Government Licence v3.0 (*Contains public sector information licensed under the Open Government Licence v3.0*). Se distinguen tres fechas: la del fenómeno (`date` de la colisión), la del registro (año de la colección) y la de la copia usada (12-10-2026).
 
 ## Construcción de la base analítica
 
@@ -98,7 +138,7 @@ ggplot(bx, aes(x, y)) + geom_label(aes(label = txt), size = 3, label.padding = u
 
 ## Calidad de los datos y cambio de medición
 
-Los códigos `-1` significan desconocido y no se tratan como ausencia ni como cero; los códigos 9 y 99 se conservan como categoría propia. Las proporciones más altas de desconocidos son `r esp[order(-prop_desc)][1, variable]` (`r n1(esp[order(-prop_desc)][1, prop_desc])` %) y `r esp[order(-prop_desc)][2, variable]` (`r n1(esp[order(-prop_desc)][2, prop_desc])` %); `local_authority_district` está vacío en el 100 % de los registros y se excluye. Se usan las variables `*_historic` (formato 2011), completas en 2021–2023, y no la conversión al formato 2024, que agrupa categorías (p. ej., en `junction_detail` los códigos 1, 2 y 5 pasan a 0); no se mezclan ambos formatos.
+Los códigos `-1` significan desconocido y no se tratan como ausencia ni como cero; los códigos 9 y 99 se conservan como categoría propia. Las proporciones más altas de desconocidos son `r sub(" \\(.*", "", esp[order(-prop_desc)][1, variable])` (`r n1(esp[order(-prop_desc)][1, prop_desc])` %) y `r sub(" \\(.*", "", esp[order(-prop_desc)][2, variable])` (`r n1(esp[order(-prop_desc)][2, prop_desc])` %); `local_authority_district` está vacío en el 100 % de los registros y se excluye. Se usan las variables `*_historic` (formato 2011), completas en 2021–2023, y no la conversión al formato 2024, que agrupa categorías (p. ej., en `junction_detail` los códigos 1, 2 y 5 pasan a 0); no se mezclan ambos formatos.
 
 El hallazgo más importante es el **cambio de medición**. Según `collision_injury_based`, la fuerza 1 casi nunca reporta con sistema basado en lesiones (`r n1(medi[fuerza=="1_Metropolitan" & collision_injury_based=="1", sum(N)] / medi[fuerza=="1_Metropolitan", sum(N)])` % de sus colisiones), mientras que en las fuerzas 6 y 13 una fracción relevante de 2021 se registró sin ese sistema (`r n1(medi[fuerza=="6_GreaterManchester" & collision_year==2021 & collision_injury_based=="0", prop])` % y `r n1(medi[fuerza=="13_WestYorkshire" & collision_year==2021 & collision_injury_based=="0", prop])` %) y casi desaparece desde 2022. Coherentemente, la prevalencia de gravedad difiere entre fuerzas (@tbl-prev): la diferencia puede reflejar tanto la gravedad real como la forma de medirla, y no podemos separarlas con estos datos.
 
@@ -128,7 +168,7 @@ d <- rbind(
 d[, `:=`(fila = factor(fila, levels = rev(unique(fila))), bloque = factor(bloque, levels = bl_))]
 ggplot(d, aes(bloque, fila, fill = rol)) + geom_tile(colour = "white", linewidth = 1) +
   scale_fill_manual(values = c(Entrenamiento = "#4C78A8", Validación = "#F58518", Prueba = "#E45756")) +
-  labs(x = "Semestre de la colisión", y = NULL, fill = NULL) + theme_minimal()
+  labs(x = "Semestre de la colisión", y = NULL, fill = NULL) + theme_bw(base_size = 10)
 ```
 
 ## Referencias, métricas y regla de selección
@@ -159,9 +199,9 @@ tab(rs)
 Todo el preprocesamiento se ajusta con el entrenamiento de cada partición: niveles de los factores (categorías no vistas pasan a "otro"), medianas de imputación simple para edades y antigüedad (con indicador de dato ausente) y codificación cíclica de hora y mes. Los desconocidos categóricos forman la categoría "desc". La búsqueda de hiperparámetros usa las tres validaciones temporales y respeta un máximo de 20 configuraciones por familia (@tbl-grid).
 
 - **Referencia:** prevalencia (global y por fuerza).
-- **M1, regresión logística regularizada** (`glmnet`): ridge (α = 0) o lasso (α = 1), con λ en una grilla logarítmica fija de diez valores; variables continuas estandarizadas internamente y factores en codificación completa. Expectativa: captura efectos aproximadamente aditivos y falla con interacciones y no linealidades.
-- **M2, árbol podado** (`rpart`): se hace crecer y se poda por complejidad (cp), con tamaño mínimo de hoja como control adicional. Expectativa: captura umbrales e interacciones simples, pero es inestable y sus probabilidades son gruesas.
-- **M3, bosque aleatorio** (`ranger`, forestas de probabilidad, 200 árboles en la búsqueda y 500 en el ajuste final): variando `mtry` y tamaño mínimo de nodo. Expectativa: mejor pérdida por captar interacciones, con riesgo de aprender diferencias entre fuerzas y calibración imperfecta.
+- **M1, regresión logística regularizada** (`glmnet` \[4\]): ridge (α = 0) o lasso (α = 1), con λ en una grilla logarítmica fija de diez valores; variables continuas estandarizadas internamente y factores en codificación completa. Expectativa: captura efectos aproximadamente aditivos y falla con interacciones y no linealidades.
+- **M2, árbol podado** (`rpart` \[7\]): se hace crecer y se poda por complejidad (cp), con tamaño mínimo de hoja como control adicional. Expectativa: captura umbrales e interacciones simples, pero es inestable y sus probabilidades son gruesas.
+- **M3, bosque aleatorio** \[5\] (`ranger` \[6\], forestas de probabilidad, 200 árboles en la búsqueda y 500 en el ajuste final): variando `mtry` y tamaño mínimo de nodo. Expectativa: mejor pérdida por captar interacciones, con riesgo de aprender diferencias entre fuerzas y calibración imperfecta.
 
 ```{r tbl-grid}
 #| tbl-cap: "Presupuesto de búsqueda de hiperparámetros y configuración elegida (menor pérdida logarítmica media en validación)."
@@ -221,12 +261,12 @@ El modelo mejora a las referencias en todos los subgrupos, pero la discriminaci�
 **Eventos raros.** Las colisiones fatales son solo `r rr$n_fatales` en prueba. El modelo les asigna en promedio una probabilidad mayor (`r n3(raros[collision_severity==1, p_media_elegido], 2)`) que a las graves (`r n3(raros[collision_severity==2, p_media_elegido], 2)`) y a las leves (`r n3(raros[collision_severity==3, p_media_elegido], 2)`); el AUC de fatales frente al resto es `r n3(rr$auc_fatal_vs_resto)`, y el 20 % de colisiones con mayor probabilidad contiene `r n1(rr$pct_fatales_en_20pct_superior)` % de las fatales (y `r n1(rr$pct_graves_en_20pct_superior)` % de las graves). Con tan pocos eventos esta estimación es muy incierta y no se modelaron por separado.
 
 ```{r fig-cal}
-#| fig-cap: "Calibración del modelo elegido en prueba: probabilidad media predicha frente a frecuencia observada por decil (tamaño = colisiones). La línea punteada indica calibración perfecta."
+#| fig-cap: "Calibración del modelo elegido en prueba: probabilidad media predicha frente a frecuencia observada por decil (cada punto agrupa unas 2.950 colisiones). La línea punteada indica calibración perfecta."
 #| fig-height: 3.4
 #| fig-width: 5
 ggplot(cal, aes(p_media, frec_obs, size = n)) + geom_point() + geom_abline(linetype = 2) +
-  scale_size_continuous(labels = function(x) format(round(x), big.mark = "")) +
-  labs(x = "Probabilidad media predicha", y = "Frecuencia observada de fatal o grave", size = "Colisiones") + theme_minimal()
+  guides(size = "none") +
+  labs(x = "Probabilidad media predicha", y = "Frecuencia observada de fatal o grave") + theme_bw(base_size = 10)
 ```
 
 La calibración (@fig-cal) es razonable en el centro, pero el modelo sobreestima los deciles bajos (probabilidad predicha `r n3(cal[decil==1, p_media])` frente a `r n3(cal[decil==1, frec_obs])` observada) y subestima el decil más alto (`r n3(cal[decil==10, p_media])` frente a `r n3(cal[decil==10, frec_obs])`). Es el patrón típico de un bosque que contrae las probabilidades hacia el centro, agravado por una prevalencia algo mayor en 2023 que en el entrenamiento; las probabilidades extremas deben leerse con cautela.
@@ -240,7 +280,7 @@ cv <- function(p, nm) { o <- order(-p); y <- pp$y[o]; p <- p[o]; fin <- c(which(
   data.table(Procedimiento = nm, sens = cumsum(y)[fin] / sum(y), prec = cumsum(y)[fin] / fin) }
 cur <- rbindlist(lapply(c("REF", "REF_F", "M1", "M2", "M3"), function(m) cv(pp[[m]], m)))
 ggplot(cur, aes(sens, prec, colour = Procedimiento)) + geom_line() + geom_hline(yintercept = mean(pp$y), linetype = 2) +
-  labs(x = "Sensibilidad", y = "Precisión (VPP)") + theme_minimal()
+  labs(x = "Sensibilidad", y = "Precisión (VPP)") + theme_bw(base_size = 10)
 ```
 
 ## Sensibilidades
@@ -275,24 +315,43 @@ La prueba de 2023 se evaluó en una primera ejecución durante el desarrollo del
 
 # Reproducibilidad y contribuciones
 
-**Comando.** Desde una copia limpia del repositorio, con los archivos del paquete en `datos/` y las dependencias instaladas según el `README.md`: `Rscript --vanilla analisis.R`. El comando ejecuta preparación, particiones, ajuste, evaluación y esta misma generación del informe. La versión del repositorio es la del *commit* de la entrega [COMPLETAR: hash o enlace]. **Entradas:** `colisiones.csv`, `vehiculos.csv`, `victimas.csv`, `stats19_diccionario.xlsx` (copia del 12-10-2026). **Tiempo de ejecución:** `r dur` minutos en un computador de un núcleo (los hilos de `ranger` se fijan en 1 para que los resultados sean idénticos; `STATS19_THREADS` los modifica). Las semillas están fijadas (2026).
+**Comando.** Desde una copia limpia del repositorio, con los archivos del paquete en `datos/` y las dependencias instaladas según el `README.md`: `Rscript --vanilla analisis.R`. El comando ejecuta preparación, particiones, ajuste, evaluación y esta misma generación del informe. La versión entregada corresponde a la etiqueta `entrega-final` del repositorio [COMPLETAR: enlace del repositorio]. **Entradas:** `colisiones.csv`, `vehiculos.csv`, `victimas.csv`, `stats19_diccionario.xlsx` (copia del 12-10-2026). **Tiempo de ejecución:** `r dur` minutos en un computador de un núcleo (los hilos de `ranger` se fijan en 1 para que los resultados sean idénticos; `STATS19_THREADS` los modifica). Las semillas están fijadas (2026).
 
 **Contribuciones del equipo.** [COMPLETAR: aportes de cada integrante].
 
 **Declaración de uso de IA.** Se usó Claude (Anthropic) entre fines de octubre y comienzos de noviembre de 2026 [COMPLETAR: fechas exactas] para programar y depurar `preparacion.R`, `analisis.R` y este informe, y para revisar la estructura de la rúbrica. Se ejecutó el código completo sobre los datos entregados (incluida una ejecución desde copia limpia) y se verificaron las integridades y cifras del informe contra las tablas generadas; el equipo es responsable de revisar el código, los resultados, las afirmaciones y las referencias, y debe poder explicarlos [COMPLETAR: confirmación del equipo y fechas de uso adicionales].
 
-**Referencias.** Department for Transport (Reino Unido), *Road safety open data*, STATS19 (colisiones, vehículos, víctimas 2021–2023) y guía de datos 2025, https://data.dft.gov.uk/road-accidents-safety-data/ (copia del curso, 12-10-2026). Friedman, J., Hastie, T. y Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate descent. *Journal of Statistical Software*, 33(1). Wright, M. N. y Ziegler, A. (2017). ranger: a fast implementation of random forests for high dimensional data in C++ and R. *Journal of Statistical Software*, 77(1). Breiman, L. (2001). Random forests. *Machine Learning*, 45, 5–32. Therneau, T. y Atkinson, B., paquete R `rpart`. James, G., Witten, D., Hastie, T. y Tibshirani, R. (2021). *An Introduction to Statistical Learning* (2.ª ed.). Springer.
+# Referencias {.unnumbered}
+
+\[1\] Department for Transport (Reino Unido). *Road safety open data* (STATS19): archivos anuales de colisiones, vehículos y víctimas 2021–2023. https://data.dft.gov.uk/road-accidents-safety-data/ (copia del curso, 12 de octubre de 2026).
+
+\[2\] Department for Transport (Reino Unido). *Road safety open dataset: data guide* (2025), diccionario de variables. https://assets.publishing.service.gov.uk/media/6ab2a71d997a4b2950cced58/dft-road-casualty-statistics-road-safety-open-dataset-data-guide-2025.xlsx
+
+\[3\] Curso EYP3407 (2026). *Trabajo final: análisis estadístico reproducible*, ANEXO, ficha del caso 06 (12 de octubre de 2026). Pontificia Universidad Católica de Chile.
+
+\[4\] Friedman, J., Hastie, T. y Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate descent. *Journal of Statistical Software*, 33(1).
+
+\[5\] Breiman, L. (2001). Random forests. *Machine Learning*, 45, 5–32.
+
+\[6\] Wright, M. N. y Ziegler, A. (2017). ranger: a fast implementation of random forests for high dimensional data in C++ and R. *Journal of Statistical Software*, 77(1).
+
+\[7\] Therneau, T. y Atkinson, B. Paquete R `rpart`: recursive partitioning and regression trees.
+
+\[8\] James, G., Witten, D., Hastie, T. y Tibshirani, R. (2021). *An Introduction to Statistical Learning* (2.ª ed.). Springer.
 
 # Anexo técnico {.unnumbered}
 
 ```{r tbl-aud}
 #| tbl-cap: "Auditoría completa de predictores: nombre, interpretación, tipo, disponibilidad temporal y decisión."
-tab(pred_aud[, .(Tabla = tabla, Variable = variable, Interpretación = interpretacion, Tipo = tipo, Disponibilidad = disponibilidad, Decisión = decision)])
+#| tbl-colwidths: [9, 27, 20, 10, 12, 22]
+zw <- function(x) gsub("_", "_\u200b", x, fixed = TRUE)
+tab(pred_aud[, .(Tabla = tabla, Variable = zw(variable), Interpretación = interpretacion, Tipo = tipo, Disponibilidad = disponibilidad, Decisión = decision)])
 ```
 
 ```{r tbl-esp}
 #| tbl-cap: "Códigos especiales por variable: proporción de desconocidos (-1/NA) y de códigos 9/99."
-tab(esp[, .(Variable = variable, `Desconocidos` = round(prop_desc, 3), `9 / 99` = round(prop_9_99, 3))])
+#| tbl-colwidths: [60, 20, 20]
+tab(esp[, .(Variable = zw(variable), `Desconocidos` = round(prop_desc, 3), `9 / 99` = round(prop_9_99, 3))])
 ```
 
 ```{r tbl-medi}
