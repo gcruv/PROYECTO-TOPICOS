@@ -1,7 +1,7 @@
 # EYP3407 · Trabajo final · Caso 06: gravedad de colisiones viales registradas (STATS19)
 
 **Integrantes:** Guillermo Cruz, Lucas Pastrián, Sebastián Pavés, Constanza Sepúlveda
-**Curso:** Tópicos Aplicados en Estadística (EYP3407), PUC Chile, segundo semestre 2026
+**Curso:** Tópicos Aplicados en Estadística (EYP3407)
 **Pregunta:** ¿qué características distinguen colisiones graves o fatales dentro de las colisiones registradas? (clasificación retrospectiva; Gran Bretaña, 2021–2023, fuerzas policiales 1, 6 y 13).
 
 ## Contenido
@@ -66,7 +66,7 @@ Variables de entorno opcionales: `STATS19_DIR` (carpeta de entradas, por defecto
 
 **Control de ejecución.** Las semillas están fijadas (2026). Los hilos de `ranger` se fijan en 1 por defecto para que los resultados sean idénticos en cualquier computador; subir `STATS19_THREADS` acelera el ajuste pero puede cambiar los resultados en decimales finales. Las reglas de partición están en `analisis.R` (sección 4) y las predicciones de prueba se guardan en `salidas/predicciones_prueba.csv.gz`, desde las cuales se calculan las métricas. Tiempo aproximado: ver registro más abajo (≈ 9 minutos con un núcleo y 4 GB de memoria).
 
-## Registro de reproducción desde copia limpia
+## Registro de reproducción desde copia limpia CAMBIAR ESTO A UN COSO REAL
 
 - **Fecha:** 4 de noviembre de 2026 (02:31 a 02:39 UTC).
 - **Entorno:** Linux (Ubuntu 24), 1 núcleo, 4 GB de memoria, R 4.3.3, Quarto 1.11.9.
@@ -84,13 +84,13 @@ Variables de entorno opcionales: `STATS19_DIR` (carpeta de entradas, por defecto
 
 ## Aportes del equipo
 
-[COMPLETAR: aportes de cada integrante]
+[COMPLETAR]
 
 ## Declaración de uso de IA
 
 - **Herramienta:** Claude (Anthropic).
-- **Fechas:** [COMPLETAR: fechas exactas; fines de octubre y comienzos de noviembre de 2026].
+- **Fechas:** [COMPLETAR]
 - **Propósito:** programación y depuración de `preparacion.R` y `analisis.R`, redacción de `informe.qmd` y revisión de la estructura frente a la pauta.
-- **Partes afectadas:** todo el código y el texto del informe, con las cifras generadas por el código a partir de los datos entregados.
+- **Partes afectadas:** COMPLETAR
 - **Comprobaciones realizadas:** ejecución completa del código sobre los datos entregados, incluida una ejecución desde copia limpia con el comando anterior; verificación de integridad de claves y conteos; las cifras del informe se leen de las tablas generadas.
 - **Responsabilidad:** el equipo debe revisar el código, los resultados, las afirmaciones y las referencias, y poder explicarlos en la defensa [COMPLETAR: confirmación del equipo].
