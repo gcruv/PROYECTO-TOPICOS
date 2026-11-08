@@ -174,8 +174,10 @@ col[, (cats) := lapply(.SD, function(x) cat_desc(as.character(x))), .SDcols = ca
 
 # -----------------------------------------------------------------------------
 # 6. Union 1:1 (colisiones x agregados) y particion temporal
-#    Bloques de validacion: 2021 | 2022H1 | 2022H2 (desarrollo) y 2023 (prueba).
-#    Cada colision queda completa en un unico bloque.
+#    periodo: desarrollo (2021-2022) / prueba (2023). Cada colision queda completa
+#    en un unico periodo. Los pliegues de validacion se definen en analisis.R
+#    (seccion 4) por semestre: 2021H1->2021H2, 2021->2022H1, 2021-2022H1->2022H2.
+#    'bloque' es solo descriptiva: no se usa para definir los pliegues.
 # -----------------------------------------------------------------------------
 n_antes <- nrow(col)
 base <- merge(col, agr, by = "collision_index", all.x = TRUE)

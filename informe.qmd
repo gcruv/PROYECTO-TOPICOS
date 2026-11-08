@@ -68,7 +68,7 @@ cat('```{=typst}\n',
 '  #v(1.1em)\n',
 '  #text(size: 13pt, weight: "bold")[Tópicos Aplicados en Estadística - EYP3407]\n',
 '  #v(0.5em)\n',
-'  #text(size: 12pt)[Guillermo Cruz, Lucas Pastrián, Sebastián Pavés, Constanza Sepúlveda]\n',
+'  #text(size: 12pt)[Guillermo Cruz, Lucas Pastrián, Sebastián Pavéz, Constanza Sepúlveda]\n',
 '  #v(0.5em)\n',
 '  #text(size: 12pt)[10 de noviembre de 2026]\n',
 ']\n',
@@ -196,7 +196,7 @@ tab(rs)
 
 ## Preprocesamiento y procedimientos
 
-Todo el preprocesamiento se ajusta con el entrenamiento de cada partición: niveles de los factores (categorías no vistas pasan a "otro"), medianas de imputación simple para edades y antigüedad (con indicador de dato ausente) y codificación cíclica de hora y mes. Los desconocidos categóricos forman la categoría "desc". La búsqueda de hiperparámetros usa las tres validaciones temporales y respeta un máximo de 20 configuraciones por familia (@tbl-grid).
+Los tres procedimientos corresponden a métodos estudiados en el curso \[8\]. Todo el preprocesamiento se ajusta con el entrenamiento de cada partición: niveles de los factores (categorías no vistas pasan a "otro"), medianas de imputación simple para edades y antigüedad (con indicador de dato ausente) y codificación cíclica de hora y mes. Los desconocidos categóricos forman la categoría "desc". La búsqueda de hiperparámetros usa las tres validaciones temporales y respeta un máximo de 20 configuraciones por familia (@tbl-grid).
 
 - **Referencia:** prevalencia (global y por fuerza).
 - **M1, regresión logística regularizada** (`glmnet` \[4\]): ridge (α = 0) o lasso (α = 1), con λ en una grilla logarítmica fija de diez valores; variables continuas estandarizadas internamente y factores en codificación completa. Expectativa: captura efectos aproximadamente aditivos y falla con interacciones y no linealidades.
@@ -275,7 +275,7 @@ La calibración (@fig-cal) es razonable en el centro, pero el modelo sobreestima
 #| fig-cap: "Curvas precisión–sensibilidad en prueba (2023). La línea punteada es la prevalencia (precisión de una clasificación sin información)."
 #| fig-height: 3.4
 #| fig-width: 6
-pp <- fread(file.path(S, "predicciones_prueba.csv.gz"))
+pp <- as.data.table(read.csv(gzfile(file.path(S, "predicciones_prueba.csv.gz"))))  # R base: sin depender de R.utils
 cv <- function(p, nm) { o <- order(-p); y <- pp$y[o]; p <- p[o]; fin <- c(which(diff(p) != 0), length(p))
   data.table(Procedimiento = nm, sens = cumsum(y)[fin] / sum(y), prec = cumsum(y)[fin] / fin) }
 cur <- rbindlist(lapply(c("REF", "REF_F", "M1", "M2", "M3"), function(m) cv(pp[[m]], m)))
@@ -315,11 +315,11 @@ La prueba de 2023 se evaluó en una primera ejecución durante el desarrollo del
 
 # Reproducibilidad y contribuciones
 
-**Comando.** Desde una copia limpia del repositorio, con los archivos del paquete en `datos/` y las dependencias instaladas según el `README.md`: `Rscript --vanilla analisis.R`. El comando ejecuta preparación, particiones, ajuste, evaluación y esta misma generación del informe. La versión entregada corresponde a la etiqueta `entrega-final` del repositorio [COMPLETAR: enlace del repositorio]. **Entradas:** `colisiones.csv`, `vehiculos.csv`, `victimas.csv`, `stats19_diccionario.xlsx` (copia del 12-10-2026). **Tiempo de ejecución:** `r dur` minutos en un computador de un núcleo (los hilos de `ranger` se fijan en 1 para que los resultados sean idénticos; `STATS19_THREADS` los modifica). Las semillas están fijadas (2026).
+**Comando.** Desde una copia limpia del repositorio, con los archivos del paquete en `datos/` y las dependencias instaladas según el `README.md`: `Rscript --vanilla analisis.R`. El comando ejecuta preparación, particiones, ajuste, evaluación y esta misma generación del informe. La versión entregada corresponde a la etiqueta `entrega-final` del repositorio (<https://github.com/gcruv/PROYECTO-TOPICOS>). **Entradas:** `colisiones.csv`, `vehiculos.csv`, `victimas.csv`, `stats19_diccionario.xlsx` (copia del 12-10-2026). **Tiempo de ejecución:** `r sub(".", ",", dur, fixed = TRUE)` minutos usando un solo hilo de ejecución (los hilos de `ranger` se fijan en 1 para que los resultados sean idénticos; `STATS19_THREADS` los modifica). Las semillas están fijadas (2026).
 
-**Contribuciones del equipo.** [COMPLETAR: aportes de cada integrante].
+**Contribuciones del equipo.** Guillermo Cruz: diseño de la evaluación y redacción del informe. Lucas Pastrián: preparación y auditoría de los datos, repositorio y reproducibilidad. Sebastián Pavéz: preparación y auditoría de los datos, y revisión general frente a la pauta. Constanza Sepúlveda: diseño de la evaluación y presentación. Todos: ajuste y comparación de modelos, incertidumbre, diagnóstico y sensibilidades.
 
-**Declaración de uso de IA.** Se usó Claude (Anthropic) entre fines de octubre y comienzos de noviembre de 2026 [COMPLETAR: fechas exactas] para programar y depurar `preparacion.R`, `analisis.R` y este informe, y para revisar la estructura de la rúbrica. Se ejecutó el código completo sobre los datos entregados (incluida una ejecución desde copia limpia) y se verificaron las integridades y cifras del informe contra las tablas generadas; el equipo es responsable de revisar el código, los resultados, las afirmaciones y las referencias, y debe poder explicarlos [COMPLETAR: confirmación del equipo y fechas de uso adicionales].
+**Declaración de uso de IA.** Se usó Claude (Anthropic) el 3, 4 y 8 de noviembre de 2026 para programar y depurar `preparacion.R`, `analisis.R` y este informe, y para revisar la estructura de la rúbrica. Se ejecutó el código completo sobre los datos entregados (incluida una ejecución desde copia limpia) y se verificaron las integridades y cifras del informe contra las tablas generadas; el equipo revisó el código, los resultados, las afirmaciones y las referencias, y puede explicarlos.
 
 # Referencias {.unnumbered}
 
