@@ -1,0 +1,375 @@
+---
+lang: es
+format:
+  typst:
+    papersize: presentation-16-9
+    margin: { x: 1.6cm, y: 1.1cm }
+    fontsize: 17pt
+    mainfont: "Liberation Sans"
+    include-in-header: estilo_pres.typ
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+# Presentacion: todas las cifras y graficos se leen de ../salidas (resultados reproducidos).
+library(data.table); library(ggplot2)
+S <- file.path("..", Sys.getenv("STATS19_OUT", "salidas"))
+L <- function(f) fread(file.path(S, f))
+dir.create("figs", showWarnings = FALSE)
+invisible(file.copy("../logo_puc.png", "logo_puc.png", overwrite = TRUE))
+
+constr <- L("tabla_construccion.csv"); integ <- L("tabla_integridad.csv")
+prev <- L("tabla_prevalencia.csv"); medi <- L("tabla_medicion.csv")
+busq <- L("tabla_busqueda_desarrollo.csv"); sel <- L("tabla_seleccion.csv")
+dev <- L("tabla_modelos_desarrollo.csv"); tst <- L("tabla_modelos_prueba.csv")
+conf <- L("tabla_confusion_prueba.csv"); diag <- L("tabla_diagnostico_subgrupos.csv")
+cal <- L("tabla_calibracion_prueba.csv"); bl <- L("tabla_incertidumbre_logloss.csv")
+sd_ <- L("tabla_sensibilidad_desarrollo.csv"); st_ <- L("tabla_sensibilidad_prueba.csv")
+rr <- L("tabla_eventos_raros_resumen.csv"); raros <- L("tabla_eventos_raros.csv")
+reg <- readLines(file.path(S, "registro_ejecucion.txt"))
+stopifnot(sel[elegido == TRUE, modelo] == "M3")
+
+# formato
+n3 <- function(x, d = 3) format(round(x, d), nsmall = d, decimal.mark = ",")
+pc <- function(x, d = 1) paste0(format(round(100 * x, d), nsmall = d, decimal.mark = ","), " %")
+mi <- function(x) format(x, big.mark = ".", decimal.mark = ",", scientific = FALSE)
+g <- function(tb, m, col) tb[modelo == m][[col]]
+typ <- function(...) cat("```{=typst}\n", ..., "\n```\n", sep = "")
+esc <- function(x) gsub("([][#$*_@<>`\\\\])", "\\\\\\1", as.character(x))
+# tabla Typst: d = data.frame de texto; resaltar = filas con fondo
+ttab <- function(d, align = NULL, resaltar = integer(0), ancho = NULL) {
+  nc <- ncol(d)
+  if (is.null(align)) align <- c("left", rep("right", nc - 1))
+  hdr <- paste0("table.header(", paste0("[*", esc(names(d)), "*]", collapse = ", "), ")")
+  filas <- vapply(seq_len(nrow(d)), function(i) {
+    cel <- esc(unlist(d[i, ]))
+    if (i %in% resaltar) paste0("table.cell(fill: rgb(\"#fbe3c8\"))[*", cel, "*]", collapse = ", ")
+    else paste0("[", cel, "]", collapse = ", ")
+  }, "")
+  cols <- if (is.null(ancho)) paste0("(", paste(rep("auto", nc), collapse = ", "), ")") else ancho
+  paste0("#table(columns: ", cols, ", align: (", paste(align, collapse = ", "), "),\n",
+         "table.hline(stroke: 1pt + azul), ", hdr, ", table.hline(stroke: 0.6pt + azul),\n",
+         paste(filas, collapse = ",\n"), ",\ntable.hline(stroke: 1pt + azul))")
+}
+tema <- theme_minimal(base_size = 15) + theme(panel.grid.minor = element_blank())
+AZUL <- "#1f3b70"; ACENTO <- "#d9822b"; GRIS <- "#9aa3ad"
+nomF <- c("1_Metropolitan" = "1 Metropolitan", "6_GreaterManchester" = "6 Gr. Manchester",
+          "13_WestYorkshire" = "13 West Yorkshire")
+
+nTot <- constr[1, filas]; nDev <- constr[grepl("desarrollo", paso), filas]; nTes <- constr[grepl("prueba", paso), filas]
+dur <- sub(".", ",", sub("Duracion \\(min\\): ", "", reg[grep("^Duracion", reg)]), fixed = TRUE)
+```
+
+```{r portada}
+#| output: asis
+typ('#align(center + horizon)[
+  #image("logo_puc.png", width: 2.6cm)
+  #v(0.6em)
+  #text(size: 27pt, weight: "bold", fill: azul)[Gravedad de colisiones viales registradas]
+  #v(-0.3em)
+  #text(size: 18pt, fill: azul)[STATS19, Gran Bretaña 2021–2023: comparación de procedimientos de clasificación]
+  #v(0.4em)
+  #line(length: 40%, stroke: 1.6pt + acento)
+  #v(0.4em)
+  #text(size: 15pt)[Guillermo Cruz · Lucas Pastrián · Sebastián Pavéz · Constanza Sepúlveda]
+  #v(0.1em)
+  #text(size: 13pt, fill: gris)[Tópicos Aplicados en Estadística (EYP3407) · Caso 06 · 12 de noviembre de 2026]
+]')
+```
+
+```{r d2}
+#| output: asis
+typ('#diap(seccion: "1 · Problema y datos")[Pregunta, población y respuesta][
+#grid(columns: (1.15fr, 1fr), gutter: 1.1cm,
+[
+- *Pregunta:* ¿qué características distinguen las colisiones *graves o fatales* entre las colisiones registradas?
+- *Población:* colisiones con lesionados registradas por la policía (fuerzas 1, 6 y 13), 2021–2023: *', mi(nTot), '* colisiones.
+- *Unidad:* la colisión (`collision_index`).
+- *Respuesta:* 1 = fatal o grave · 0 = leve (sin desconocidos).
+],
+[
+#block(fill: fondo, inset: 14pt, radius: 4pt, width: 100%)[
+  #text(size: 15pt, fill: gris)[Prevalencia de fatal o grave]
+  #v(-0.2em)
+  #text(size: 40pt, weight: "bold", fill: azul)[', pc(constr[1, prevalencia]), ']
+  #v(-0.2em)
+  #text(size: 14pt)[', mi(constr[1, casos_y1]), ' de ', mi(nTot), ' colisiones]
+]
+#v(0.4em)
+- Clasificación *retrospectiva*: la colisión ya ocurrió y fue registrada.
+- No predice accidentes ni mide efectos causales.
+])
+]')
+```
+
+```{r d3fig}
+p <- copy(prev)[, Fuerza := factor(nomF[fuerza], levels = nomF)]
+gp <- ggplot(p, aes(factor(collision_year), prevalencia, fill = Fuerza)) +
+  geom_col(position = position_dodge(0.8), width = 0.75) +
+  geom_text(aes(label = format(round(100 * prevalencia), nsmall = 0)), position = position_dodge(0.8), vjust = -0.3, size = 4.2) +
+  scale_fill_manual(values = c(AZUL, ACENTO, GRIS)) +
+  scale_y_continuous(labels = function(x) paste0(100 * x, " %"), limits = c(0, 0.36)) +
+  labs(x = NULL, y = "Fatal o grave (%)", fill = NULL) + tema + theme(legend.position = "top")
+ggsave("figs/prevalencia.png", gp, width = 6.4, height = 4.2, dpi = 200, bg = "white")
+nb <- function(f, a) medi[fuerza == f & collision_year == a & collision_injury_based == 0, prop]
+```
+
+```{r d3}
+#| output: asis
+typ('#diap(seccion: "1 · Problema y datos")[Construcción de la base y cambio de medición][
+#grid(columns: (1fr, 1.05fr), gutter: 0.9cm,
+[
+- Tres tablas: colisiones (', mi(nTot), '), vehículos (', mi(constr[2, filas]), ') y víctimas (', mi(constr[3, filas]), ').
+- Vehículos se *agregan a una fila por colisión antes de unir*: unir vehículos × víctimas daría ', mi(integ[16, valor]), ' filas.
+- Víctimas: solo auditoría. Claves sin duplicados ni pérdidas.
+- *Cambio de medición:* la fuerza 1 casi no usa el sistema basado en lesiones; en 2021 las fuerzas 6 y 13 tenían ', pc(nb("6_GreaterManchester", 2021), 0), ' y ', pc(nb("13_WestYorkshire", 2021), 0), ' sin él.
+],
+[
+#image("figs/prevalencia.png", width: 100%)
+])
+#v(-0.3em)
+#msg[La prevalencia difiere por fuerza: puede ser gravedad real o forma de medir. Por eso la fuerza no es predictor.]
+]')
+```
+
+```{r d4}
+#| output: asis
+typ('#diap(seccion: "2 · Diseño de validación")[Información admisible: qué entra y qué no][
+#grid(columns: (1fr, 1fr), gutter: 1cm,
+[
+#text(weight: "bold", fill: azul)[Incluidas]
+- Vía: tipo, clase, límite de velocidad, intersección, cruces, urbano/rural.
+- Condiciones: luz, clima, superficie, peligros.
+- Calendario: hora, día, mes.
+- Vehículos agregados: n.º de motos, bicicletas, buses, pesados; edades.
+- Reconstruidas tras el evento: derrape/vuelco, salida de calzada (→ sensibilidad S1).
+],
+[
+#text(weight: "bold", fill: acento)[Excluidas]
+- *Fuga:* gravedades ajustadas, `enhanced_severity`, n.º de lesionados, asistencia policial, tabla de víctimas.
+- Identificadores y ubicación fina (coordenadas, LSOA).
+#v(0.3em)
+#text(weight: "bold", fill: gris)[Solo diseño]
+- Fuerza y sistema de medición: estratificación y sensibilidad S2.
+- Autoridad vial: unidad de remuestreo.
+])
+]')
+```
+
+```{r d5fig}
+bl_ <- c("2021S1", "2021S2", "2022S1", "2022S2", "2023")
+d <- rbind(
+  data.table(fila = "Pliegue 1", bloque = bl_[1:2], rol = c("Entrenamiento", "Validación")),
+  data.table(fila = "Pliegue 2", bloque = bl_[1:3], rol = c("Entrenamiento", "Entrenamiento", "Validación")),
+  data.table(fila = "Pliegue 3", bloque = bl_[1:4], rol = c(rep("Entrenamiento", 3), "Validación")),
+  data.table(fila = "Final", bloque = bl_, rol = c(rep("Entrenamiento", 4), "Prueba")))
+d[, `:=`(fila = factor(fila, levels = rev(unique(fila))), bloque = factor(bloque, levels = bl_), rol = factor(rol, levels = c("Entrenamiento", "Validación", "Prueba")))]
+gt <- ggplot(d, aes(bloque, fila, fill = rol)) + geom_tile(colour = "white", linewidth = 1.2) +
+  scale_fill_manual(values = c(Entrenamiento = AZUL, Validación = ACENTO, Prueba = "#c0392b")) +
+  labs(x = "Semestre de la colisión", y = NULL, fill = NULL) + tema + theme(legend.position = "top", panel.grid = element_blank())
+ggsave("figs/temporal.png", gt, width = 6.6, height = 3.6, dpi = 200, bg = "white")
+```
+
+```{r d5}
+#| output: asis
+typ('#diap(seccion: "2 · Diseño de validación")[Validación temporal, métricas y referencia][
+#grid(columns: (1.1fr, 1fr), gutter: 0.9cm,
+[
+#image("figs/temporal.png", width: 100%)
+#nota[Desarrollo 2021–2022: ', mi(nDev), ' colisiones · Prueba 2023: ', mi(nTes), ', evaluada una sola vez.]
+],
+[
+- Partición *temporal*, no aleatoria: clasificar periodos posteriores; cada colisión entera en un bloque.
+- *Métrica principal:* pérdida logarítmica (calidad de las probabilidades).
+- Complementarias: Brier, AUC ROC, AUC-PR; sensibilidad, especificidad y VPP con umbral fijado en desarrollo.
+- *Referencia:* prevalencia de entrenamiento (y por fuerza, más exigente).
+])
+]')
+```
+
+```{r d6}
+#| output: asis
+b <- busq[, .SD[which.min(ll_medio)], by = modelo]
+m6 <- data.frame(
+  Procedimiento = c("M1 Logística ridge/lasso", "M2 Árbol podado", "M3 Bosque aleatorio"),
+  Configuraciones = busq[, .N, by = modelo]$N,
+  Elegida = c(sprintf("%s, λ = %s", ifelse(b[modelo == "M1", alpha] == 1, "lasso", "ridge"), n3(b[modelo == "M1", lambda], 4)),
+              sprintf("cp = %s, hoja mín. %s", format(b[modelo == "M2", cp], scientific = FALSE, decimal.mark = ","), b[modelo == "M2", minbucket]),
+              sprintf("mtry = %s, nodo mín. %s", b[modelo == "M3", mtry], b[modelo == "M3", min.node.size])),
+  `Pérdida log. (val.)` = n3(c(b[modelo == "M1", ll_medio], b[modelo == "M2", ll_medio], b[modelo == "M3", ll_medio]), 4),
+  check.names = FALSE)
+typ('#diap(seccion: "3 · Métodos y resultados")[Tres procedimientos, misma información][
+- Preprocesamiento ajustado *solo con el entrenamiento* de cada pliegue (niveles, imputación, codificación cíclica).
+- Búsqueda con 3 pliegues temporales, máximo 20 configuraciones por familia.
+- *Regla fijada antes:* menor pérdida media; un modelo más complejo solo si mejora en más de 0,002.
+#v(0.3em)
+', ttab(m6, align = c("left", "center", "left", "right"), resaltar = 3), '
+#v(0.4em)
+#text(weight: "bold", fill: azul)[Expectativas fijadas antes del ajuste]
+
+#nota[M1: efectos aditivos; falla con interacciones. · M2: umbrales e interacciones simples; inestable y probabilidades gruesas. · M3: interacciones y no linealidades; riesgo de aprender diferencias entre fuerzas y calibración imperfecta.]
+]')
+```
+
+```{r d7}
+#| output: asis
+mods <- c("REF", "REF_F", "M1", "M2", "M3")
+etq <- c(REF = "Referencia (prevalencia)", REF_F = "Referencia por fuerza", M1 = "M1 Logística", M2 = "M2 Árbol", M3 = "M3 Bosque")
+m7 <- data.frame(
+  Procedimiento = etq[mods],
+  `Pérdida log. desarrollo` = n3(sapply(mods, function(m) g(dev, m, "logloss")), 4),
+  `Pérdida log. prueba` = n3(sapply(mods, function(m) g(tst, m, "logloss")), 4),
+  `AUC ROC prueba` = n3(sapply(mods, function(m) g(tst, m, "auc_roc"))),
+  `AUC-PR prueba` = n3(sapply(mods, function(m) g(tst, m, "auc_pr"))),
+  check.names = FALSE)
+typ('#diap(seccion: "3 · Métodos y resultados")[Resultados: desarrollo y prueba (2023)][
+', ttab(m7, resaltar = 5), '
+#v(0.5em)
+- El bosque es el elegido y mantiene su ventaja en prueba; el orden de los modelos se repite.
+- El árbol no mejora a la regresión en prueba (', n3(g(tst, "M2", "logloss"), 4), ' frente a ', n3(g(tst, "M1", "logloss"), 4), ').
+#v(0.2em)
+#msg[M3 reduce la pérdida en ', n3(-g(tst, "M3", "dif_logloss_vs_ref")), ' nats por colisión frente a la prevalencia y en ', n3(-g(tst, "M3", "dif_logloss_vs_ref_f")), ' frente a la prevalencia por fuerza.]
+]')
+```
+
+```{r d8fig}
+gc <- ggplot(cal, aes(p_media, frec_obs)) + geom_abline(linetype = 2, colour = GRIS) +
+  geom_line(colour = AZUL) + geom_point(colour = AZUL, size = 2.8) +
+  coord_equal(xlim = c(0, 0.45), ylim = c(0, 0.45)) +
+  labs(x = "Probabilidad predicha (media por decil)", y = "Frecuencia observada") + tema
+ggsave("figs/calibracion.png", gc, width = 4.4, height = 4.2, dpi = 200, bg = "white")
+df <- diag[tipo == "fuerza" & modelo == "M3"][, Fuerza := paste0(nomF[grupo], "\n(n = ", trimws(mi(n)), ")")]
+df[, Fuerza := factor(Fuerza, levels = rev(Fuerza[match(names(nomF), grupo)]))]
+ga <- ggplot(df, aes(auc_roc, Fuerza)) + geom_col(fill = AZUL, width = 0.6) +
+  geom_text(aes(label = n3(auc_roc)), hjust = -0.15, colour = AZUL, size = 6.2, fontface = "bold") +
+  coord_cartesian(xlim = c(0.5, 0.8)) + labs(x = "AUC ROC del bosque en prueba", y = NULL) + theme_minimal(base_size = 19) + theme(panel.grid.minor = element_blank())
+ggsave("figs/auc_fuerza.png", ga, width = 5.6, height = 3.0, dpi = 200, bg = "white")
+```
+
+```{r d8}
+#| output: asis
+typ('#diap(seccion: "3 · Métodos y resultados")[Diagnóstico: calibración y desempeño por fuerza][
+#grid(columns: (0.85fr, 1.15fr), gutter: 0.8cm,
+[
+#image("figs/calibracion.png", height: 8.3cm)
+],
+[
+#image("figs/auc_fuerza.png", height: 4.6cm)
+- Calibración razonable al centro; sobreestima el decil bajo (', n3(cal[decil == 1, p_media]), ' vs ', n3(cal[decil == 1, frec_obs]), ') y subestima el alto (', n3(cal[decil == 10, p_media]), ' vs ', n3(cal[decil == 10, frec_obs]), ').
+- Mejora a las referencias en todos los subgrupos, pero discrimina menos dentro de las fuerzas 6 y 13.
+])
+#v(-0.2em)
+#msg[Recomendación poco confiable para clasificar dentro de las fuerzas 6 y 13.]
+]')
+```
+
+```{r d9}
+#| output: asis
+s9 <- data.frame(
+  Sensibilidad = c("S1: sin variables reconstruidas", "S2: medición homogénea (fuerzas 6 y 13)"),
+  `Dif. pérdida desarrollo` = n3(c(sd_[modelo == "M3" & grepl("^S1", sensibilidad), dif_logloss], sd_[modelo == "M3" & grepl("^S2", sensibilidad), dif_logloss]), 4),
+  `Dif. pérdida prueba` = n3(c(st_[modelo == "M3" & grepl("^S1", sensibilidad), dif_logloss], st_[modelo == "M3" & grepl("^S2", sensibilidad), dif_logloss]), 4),
+  check.names = FALSE)
+ic <- function(r, u) sprintf("%s [%s; %s]", n3(bl[referencia %like% r & unidad == u, reduccion_logloss]), n3(bl[referencia %like% r & unidad == u, ic_inf]), n3(bl[referencia %like% r & unidad == u, ic_sup]))
+i9 <- data.frame(Referencia = c("Prevalencia global", "Prevalencia por fuerza"),
+                 `Por autoridad vial (48)` = c(ic("^REF \\(", "cluster_geo"), ic("REF_F", "cluster_geo")),
+                 `Por semana (53)` = c(ic("^REF \\(", "semana"), ic("REF_F", "semana")), check.names = FALSE)
+typ('#diap(seccion: "4 · Sensibilidad y cierre")[Sensibilidades e incertidumbre (bosque)][
+#text(weight: "bold", fill: azul)[Sensibilidades] #nota[(variante − modelo completo, mismas filas; positivo = peor)]
+', ttab(s9), '
+#nota[S1: casi no cambia → el resultado no depende de información reconstruida. S2: baja la pérdida por la tasa base, pero el AUC no cambia (', n3(sd_[modelo == "M3" & grepl("^S2", sensibilidad), auc_completo]), ' vs ', n3(sd_[modelo == "M3" & grepl("^S2", sensibilidad), auc_variante]), ').]
+#v(0.4em)
+#text(weight: "bold", fill: azul)[Reducción de pérdida en prueba, IC 95 %] #nota[(remuestreo por grupos, 2000 réplicas, predicciones fijas)]
+', ttab(i9, align = c("left", "center", "center")), '
+]')
+```
+
+```{r d10}
+#| output: asis
+typ('#diap(seccion: "4 · Sensibilidad y cierre")[Recomendación, límites y reproducibilidad][
+#grid(columns: (1fr, 1fr), gutter: 1cm,
+[
+#text(weight: "bold", fill: azul)[Recomendación]
+- Usar el bosque para *priorizar y describir* registros ya reportados.
+- Discriminación moderada: AUC ', n3(g(tst, "M3", "auc_roc")), '; con el umbral de desarrollo, VPP ', n3(g(conf, "M3", "VPP"), 2), '.
+- Si importa interpretar, la logística es defendible (AUC ', n3(g(tst, "M1", "auc_roc")), ').
+#v(0.2em)
+#text(weight: "bold", fill: acento)[Límites]
+- La gravedad se mide distinto entre fuerzas y años.
+- Domina la fuerza 1; no generaliza al país ni a colisiones sin lesionados.
+- Asociación predictiva, no causal.
+],
+[
+#text(weight: "bold", fill: azul)[Reproducibilidad]
+- Un comando: `Rscript --vanilla analisis.R`
+- Preparación → validación → prueba → informe, ≈ ', dur, ' min.
+- Semillas fijas y `ranger` con un hilo: resultados idénticos con las mismas versiones.
+- Probado desde copia limpia en otro computador.
+#v(0.3em)
+#nota[github.com/gcruv/PROYECTO-TOPICOS]
+])
+]')
+```
+
+```{r a1}
+#| output: asis
+cf <- conf[modelo == "M3"]
+typ('#diap(seccion: "Apoyo")[A1 · Matriz de confusión en prueba (bosque)][
+#grid(columns: (1fr, 1fr), gutter: 1cm,
+[
+', ttab(data.frame(` ` = c("Predice grave", "Predice leve"), `Grave (real)` = mi(c(cf$TP, cf$FN)), `Leve (real)` = mi(c(cf$FP, cf$TN)), check.names = FALSE), align = c("left", "right", "right")), '
+#nota[Umbral ', n3(cf$umbral), ' fijado en desarrollo (índice de Youden).]
+],
+[
+- Sensibilidad: ', pc(cf$sensibilidad), '
+- Especificidad: ', pc(cf$especificidad), '
+- VPP: ', pc(cf$VPP), ' (prevalencia ', pc(g(tst, "M3", "prevalencia")), ')
+])
+]')
+```
+
+```{r a2fig}
+pp <- as.data.table(read.csv(gzfile(file.path(S, "predicciones_prueba.csv.gz"))))
+cv <- function(p, nm) { o <- order(-p); y <- pp$y[o]; p <- p[o]; fin <- c(which(diff(p) != 0), length(p))
+  data.table(Procedimiento = nm, sens = cumsum(y)[fin] / sum(y), prec = cumsum(y)[fin] / fin) }
+cur <- rbindlist(lapply(c("REF_F", "M1", "M2", "M3"), function(m) cv(pp[[m]], etq[m])))
+cur[, Procedimiento := factor(Procedimiento, levels = etq[c("M3", "M1", "M2", "REF_F")])]
+gpr <- ggplot(cur, aes(sens, prec, colour = Procedimiento)) + geom_line(linewidth = 0.9) +
+  geom_hline(yintercept = mean(pp$y), linetype = 2, colour = GRIS) +
+  scale_colour_manual(values = c(AZUL, ACENTO, "#7fa7d9", GRIS)) +
+  coord_cartesian(ylim = c(0, 0.7)) + labs(x = "Sensibilidad", y = "Precisión (VPP)", colour = NULL) + tema
+ggsave("figs/pr.png", gpr, width = 8, height = 3.9, dpi = 200, bg = "white")
+```
+
+```{r a2}
+#| output: asis
+typ('#diap(seccion: "Apoyo")[A2 · Curvas precisión–sensibilidad en prueba][
+#align(center)[#image("figs/pr.png", width: 88%)]
+#nota[Línea punteada: prevalencia de prueba (', pc(g(tst, "M3", "prevalencia")), ').]
+]')
+```
+
+```{r a3}
+#| output: asis
+typ('#diap(seccion: "Apoyo")[A3 · Eventos raros: colisiones fatales en prueba][
+- Solo *', rr$n_fatales, '* colisiones fatales en 2023.
+- Probabilidad media asignada: fatales ', n3(raros[collision_severity == 1, p_media_elegido], 2), ' · graves ', n3(raros[collision_severity == 2, p_media_elegido], 2), ' · leves ', n3(raros[collision_severity == 3, p_media_elegido], 2), '.
+- AUC fatal frente al resto: ', n3(rr$auc_fatal_vs_resto), '.
+- El 20 % de colisiones con mayor probabilidad contiene el ', pc(rr$pct_fatales_en_20pct_superior), ' de las fatales.
+#v(0.3em)
+#msg[Con tan pocos eventos la estimación es muy incierta; no se modelaron por separado.]
+]')
+```
+
+```{r a4}
+#| output: asis
+typ('#diap(seccion: "Apoyo")[A4 · Trazabilidad: ampliación de la grilla][
+- La prueba de 2023 se evaluó una primera vez durante el desarrollo, con una grilla más chica.
+- Con resultados *de desarrollo* se vio que la mejor configuración estaba en el borde → se amplió la grilla (siempre ≤ 20 por familia) y se añadió la referencia por fuerza.
+- El modelo elegido no cambió (bosque); la regresión y el bosque mantuvieron su configuración; el árbol cambió levemente.
+- Está declarado en el informe (sección 5.6), como exige la pauta.
+]')
+```
